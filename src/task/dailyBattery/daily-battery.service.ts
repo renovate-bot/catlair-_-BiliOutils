@@ -5,6 +5,7 @@ import { TaskConfig } from '@/config';
 import { getInfoByRoom, sendMessageApp } from '@/net/live.request';
 import type { Tasklist } from './daily-battery.dto';
 import { liveMobileHeartBeat } from '../liveIntimacy/intimacy.request';
+import { getRandomOptions } from '../liveIntimacy/intimacy.service';
 
 /**
  * 获取任务进度
@@ -17,7 +18,7 @@ async function getTaskStatusV1() {
       return { s: -1 };
     }
     if (data.is_surplus === -1 || data.target === 0) {
-      logger.info('账号无法完成该任务，故跳过');
+      logger.info('账号无法完成[老任务]，故跳过');
       return { s: -2 };
     }
     const { status, progress } = data;
@@ -199,9 +200,15 @@ async function task39(tasks: Tasklist[]) {
     const first = await runTask1(task1);
     if (first === 0) return true;
 
-    let result: any;
+    let result: any,
+      count = 0;
     while ((result = await runTask1(result))) {
       await apiDelay(3000);
+      count++;
+      if (count > 35) {
+        logger.warn('任务进度未更新，跳过');
+        break;
+      }
     }
     return true;
   }
@@ -214,9 +221,15 @@ async function task39(tasks: Tasklist[]) {
     const first = await runTask2(task2);
     if (first === 0) return true;
 
-    let result: any;
+    let result: any,
+      count = 0;
     while ((result = await runTask2(result))) {
       await apiDelay(3000);
+      count++;
+      if (count > 35) {
+        logger.warn('任务进度未更新，跳过');
+        break;
+      }
     }
     return true;
   }
@@ -283,21 +296,17 @@ async function runTask2(task?: Tasklist | number) {
   await sendMessageApp(roomid, dm, room_info);
   // 观看30秒
   logger.debug(`观看30秒[${roomid}]`);
-  await liveMobileHeartBeat({
+  const options = {
+    ...getRandomOptions(),
     room_id: roomid,
     up_id: room_info?.uid,
     up_session: room_info?.up_session,
     area_id: room_info?.parent_area_id,
     parent_id: room_info?.area_id,
-  });
+  };
+  await liveMobileHeartBeat(options);
   await apiDelay(30000);
-  await liveMobileHeartBeat({
-    room_id: roomid,
-    up_id: room_info?.uid,
-    up_session: room_info?.up_session,
-    area_id: room_info?.parent_area_id,
-    parent_id: room_info?.area_id,
-  });
+  await liveMobileHeartBeat(options);
   return 1;
 }
 
