@@ -18,7 +18,7 @@
   },
   automerge: true,
   automergeType: 'pr',
-  requiredStatusChecks: null,
+  requiredStatusChecks: false,
   ignoreTests: true,
   platformAutomerge: true,
 }
